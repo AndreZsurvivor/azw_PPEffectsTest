@@ -13,7 +13,7 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 	protected vector m_StartRGB = vector.Zero;
 	protected float m_ExpValue = 0;
 	protected float m_BlurValue = 0;
-	protected float m_AccumulatedTime = 0;
+	protected float m_AccumulateddeltaT = 0;
 
 	const float FADE_IN_TIME = 0.5;
 	const float FADE_OUT_TIME = 10;
@@ -41,52 +41,49 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 		m_State = StateProcessing(m_State, delta);
 	}
 	
-	override void OnStop(Param par = null)
+	override void OnStop( Param par = null )
 	{
 		super.OnStop(par);
 	}
 
-	EffectState StateProcessing(EffectState state, float delta = -1.0)
+	protected EffectState StateProcessing( EffectState state, float delta )
 	{
-		if (delta == -1.0)
-			state = EffectState.STOP;
-
 		switch(state)
 		{
 			case EffectState.START:
-				m_AccumulatedTime = 0;
+				m_AccumulateddeltaT = 0;
 				m_ExpValue = 0;
 				m_BlurValue = 0;
 				state = EffectState.FADE_IN;
 				break;
 
 			case EffectState.FADE_IN:
-				m_AccumulatedTime += delta;
-				FadeIn( m_AccumulatedTime / FADE_IN_TIME );
+				m_AccumulateddeltaT += delta;
+				FadeIn( m_AccumulateddeltaT / FADE_IN_TIME );
 
-				if ( m_AccumulatedTime >= FADE_IN_TIME )
+				if ( m_AccumulateddeltaT >= FADE_IN_TIME )
 				{
-					m_AccumulatedTime = 0;
+					m_AccumulateddeltaT = 0;
 					state = EffectState.RUN;
 				}
 				break;
 
 			case EffectState.RUN:
-				m_AccumulatedTime += delta;
-				Run( m_AccumulatedTime / RUN_TIME )
+				m_AccumulateddeltaT += delta;
+				Run( m_AccumulateddeltaT / RUN_TIME )
 
-				if ( m_AccumulatedTime >= RUN_TIME )
+				if ( m_AccumulateddeltaT >= RUN_TIME )
 				{
-					m_AccumulatedTime = 0;
+					m_AccumulateddeltaT = 0;
 					state = EffectState.FADE_OUT;
 				}
 				break;
 
 			case EffectState.FADE_OUT:
-				m_AccumulatedTime += delta;
-				FadeOut( m_AccumulatedTime / FADE_OUT_TIME );
+				m_AccumulateddeltaT += delta;
+				FadeOut( m_AccumulateddeltaT / FADE_OUT_TIME );
 				
-				if ( m_AccumulatedTime >= FADE_OUT_TIME )
+				if ( m_AccumulateddeltaT >= FADE_OUT_TIME )
 					state = EffectState.STOP;
 				break;
 
@@ -100,35 +97,35 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 		return state;
 	}
 
-	protected void FadeIn(float time)
+	protected void FadeIn( float deltaT )
 	{
-		m_ExpValue = 0 + FadeColourMult( 0, 1, time ) * EXP_TARGET;
-		m_BlurValue = 0 + FadeColourMult( 0, 1, time ) * BLUR_TARGET;
+		m_ExpValue = 0 + FadeColourMult( 0, 1, deltaT ) * EXP_TARGET;
+		m_BlurValue = 0 + FadeColourMult( 0, 1, deltaT ) * BLUR_TARGET;
 
-		m_StartRGB[0] = 1 - FadeColourMult( 0, 1, time ) * R_TARGET;
-		m_StartRGB[1] = 1 - FadeColourMult( 0, 1, time ) * G_TARGET;
-		m_StartRGB[2] = 1 - FadeColourMult( 0, 1, time ) * B_TARGET;
+		m_StartRGB[0] = 1 - FadeColourMult( 0, 1, deltaT ) * R_TARGET;
+		m_StartRGB[1] = 1 - FadeColourMult( 0, 1, deltaT ) * G_TARGET;
+		m_StartRGB[2] = 1 - FadeColourMult( 0, 1, deltaT ) * B_TARGET;
 			
 		SetTargetValueColor(PostProcessEffectType.Glow,PPEGlow.PARAM_COLORIZATIONCOLOR,{m_StartRGB[0], m_StartRGB[1], m_StartRGB[2], 0.0},PPEGlow.L_23_TOXIC_TINT,PPOperators.MULTIPLICATIVE);
 		SetTargetValueFloat(PPEExceptions.EXPOSURE,PPEExposureNative.PARAM_INTENSITY,false,m_ExpValue,PPEExposureNative.L_0_DEATH,PPOperators.SET);
 		SetTargetValueFloat(PostProcessEffectType.GaussFilter,PPEGaussFilter.PARAM_INTENSITY,true,m_BlurValue,PPEGaussFilter.L_0_SHOCK,PPOperators.ADD_RELATIVE);
 	}
 
-	protected void Run(float time)
+	protected void Run( float deltaT )
 	{	
 		SetTargetValueColor(PostProcessEffectType.Glow,PPEGlow.PARAM_COLORIZATIONCOLOR,{m_StartRGB[0], m_StartRGB[1], m_StartRGB[2], 0.0},PPEGlow.L_23_TOXIC_TINT,PPOperators.MULTIPLICATIVE);
 		SetTargetValueFloat(PPEExceptions.EXPOSURE,PPEExposureNative.PARAM_INTENSITY,false,m_ExpValue,PPEExposureNative.L_0_DEATH,PPOperators.SET);
 		SetTargetValueFloat(PostProcessEffectType.GaussFilter,PPEGaussFilter.PARAM_INTENSITY,true,m_BlurValue,PPEGaussFilter.L_0_SHOCK,PPOperators.ADD_RELATIVE);
 	}
 
-	protected void FadeOut(float time)
+	protected void FadeOut( float deltaT )
 	{
-		m_ExpValue = EXP_TARGET - FadeColourMult( 0, EXP_TARGET, time );
-		m_BlurValue = BLUR_TARGET - FadeColourMult( 0, BLUR_TARGET, time );
+		m_ExpValue = EXP_TARGET - FadeColourMult( 0, EXP_TARGET, deltaT );
+		m_BlurValue = BLUR_TARGET - FadeColourMult( 0, BLUR_TARGET, deltaT );
 
-		m_StartRGB[0] = ( 1 - R_TARGET ) + FadeColourMult( 0, R_TARGET, time );
-		m_StartRGB[1] = ( 1 - G_TARGET ) + FadeColourMult( 0, G_TARGET, time );
-		m_StartRGB[2] = ( 1 - B_TARGET ) + FadeColourMult( 0, B_TARGET, time );
+		m_StartRGB[0] = ( 1 - R_TARGET ) + FadeColourMult( 0, R_TARGET, deltaT );
+		m_StartRGB[1] = ( 1 - G_TARGET ) + FadeColourMult( 0, G_TARGET, deltaT );
+		m_StartRGB[2] = ( 1 - B_TARGET ) + FadeColourMult( 0, B_TARGET, deltaT );
 		
 		SetTargetValueColor(PostProcessEffectType.Glow,PPEGlow.PARAM_COLORIZATIONCOLOR,{m_StartRGB[0], m_StartRGB[1], m_StartRGB[2], 0.0},PPEGlow.L_23_TOXIC_TINT,PPOperators.MULTIPLICATIVE);
 		SetTargetValueFloat(PPEExceptions.EXPOSURE,PPEExposureNative.PARAM_INTENSITY,false,m_ExpValue,PPEExposureNative.L_0_DEATH,PPOperators.SET);
