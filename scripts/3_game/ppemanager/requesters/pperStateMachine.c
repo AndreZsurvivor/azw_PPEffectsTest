@@ -15,7 +15,8 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 	protected float m_BlurValue = 0;
 	protected float m_AccumulatedTime = 0;
 
-	const float FADE_TIME = 1;
+	const float FADE_IN_TIME = 0.5;
+	const float FADE_OUT_TIME = 10;
 	const float RUN_TIME = 5;
 
 	// the end result is 1 - the value set here
@@ -37,7 +38,6 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 	override protected void OnUpdate( float delta )
 	{
 		super.OnUpdate( delta );
-
 		m_State = StateProcessing(m_State, delta);
 	}
 	
@@ -62,8 +62,9 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 
 			case EffectState.FADE_IN:
 				m_AccumulatedTime += delta;
-				FadeIn( m_AccumulatedTime / FADE_TIME );
-				if ( m_AccumulatedTime >= FADE_TIME )
+				FadeIn( m_AccumulatedTime / FADE_IN_TIME );
+
+				if ( m_AccumulatedTime >= FADE_IN_TIME )
 				{
 					m_AccumulatedTime = 0;
 					state = EffectState.RUN;
@@ -73,6 +74,7 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 			case EffectState.RUN:
 				m_AccumulatedTime += delta;
 				Run( m_AccumulatedTime / RUN_TIME )
+
 				if ( m_AccumulatedTime >= RUN_TIME )
 				{
 					m_AccumulatedTime = 0;
@@ -82,8 +84,9 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 
 			case EffectState.FADE_OUT:
 				m_AccumulatedTime += delta;
-				FadeOut( m_AccumulatedTime / FADE_TIME );
-				if ( m_AccumulatedTime >= FADE_TIME )
+				FadeOut( m_AccumulatedTime / FADE_OUT_TIME );
+				
+				if ( m_AccumulatedTime >= FADE_OUT_TIME )
 					state = EffectState.STOP;
 				break;
 
@@ -120,8 +123,8 @@ class PPERequester_anzwStateMachine extends PPERequester_GameplayBase
 
 	protected void FadeOut(float time)
 	{
-		m_ExpValue = EXP_TARGET - FadeColourMult( 0, EXP_TARGET, m_AccumulatedTime / FADE_TIME );
-		m_BlurValue = BLUR_TARGET - FadeColourMult( 0, BLUR_TARGET, m_AccumulatedTime / FADE_TIME );
+		m_ExpValue = EXP_TARGET - FadeColourMult( 0, EXP_TARGET, time );
+		m_BlurValue = BLUR_TARGET - FadeColourMult( 0, BLUR_TARGET, time );
 
 		m_StartRGB[0] = ( 1 - R_TARGET ) + FadeColourMult( 0, R_TARGET, time );
 		m_StartRGB[1] = ( 1 - G_TARGET ) + FadeColourMult( 0, G_TARGET, time );
