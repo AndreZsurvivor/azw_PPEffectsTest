@@ -11,7 +11,8 @@ class azw_EffectTest extends ItemBase
 
     override void EEInit()
 	{
-		PPERequesterBank.GetRequester(PPERequester_anzwTest).Start();
+		//PPERequesterBank.GetRequester(PPERequester_anzwTest).Start();
+        PPERequesterBank.GetRequester(PPERequester_anzwStateMachine).Start();
 	}
 
 }
